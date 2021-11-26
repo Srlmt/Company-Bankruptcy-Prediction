@@ -5,7 +5,7 @@ library(shinydashboard)
 # Define UI for application that draws a histogram
 shinyUI(dashboardPage(
   
-  dashboardHeader(title = "Company Bankruptcy Prediction"),
+  dashboardHeader(title = "Bankruptcy Prediction"),
   
   dashboardSidebar(
     sidebarMenu(
@@ -22,26 +22,68 @@ shinyUI(dashboardPage(
   dashboardBody(
 
   
-    
      tabItems(
         tabItem(tabName="about",
-                h2("Tab Name About")
+                h2("Company Bankruptcy Prediction")
         ),
        
-       
+        #############
+        #  EDA Tab  #
+        #############
         tabItem(tabName="EDA",
-                h2("Tab Name EDA"),
+                h2("Data Exploration"),
                 fluidPage(
                   sidebarPanel(
-                    sliderInput("obs",
-                                "Number of observations:",
-                                min = 0,
-                                max = 1000,
-                                value = 500)
+                    selectInput("selectVar", "Select the Variable of Interest",
+                                c("Operating Profit Rate" = "Operating.Profit.Rate",
+                                  "Debt Ratio" = "Debt.ratio..",
+                                  "Equity to Liability" = "Equity.to.Liability"
+                                  
+                                )
+                    ),  
+                      
+                    radioButtons("rbPlot", strong("Select the Type of Plot"),
+                                 choices=c("Histogram" = "hist",
+                                           "Boxplot" = "box"
+                                 )
+                    ),
+                    br(),
+
+                    radioButtons("rbNum", strong("Select the Type of Numeric Summary"),
+                                  choices=c("Descriptive Statistics" = "descStat",
+                                            "Frequency Table" = "freq"
+                                  )
+                    ), 
+                    br(),
+                    
+                    conditionalPanel(condition = "input.rbNum == 'freq'",
+                                     sliderInput("datacut",
+                                                 "Select Number of data cut Intervals",
+                                                 min = 5,
+                                                 max = 50,
+                                                 value = 10),
+                                     br()
+                    ),
+
+                    checkboxInput("groupby", strong("Group by Bankruptcy"), FALSE)
                   ),
                   
-                  mainPanel(dataTableOutput("dataTable"),
-                            plotOutput("testPlot1")
+                  mainPanel(conditionalPanel(condition = "input.rbPlot == 'box'",
+                                             plotOutput("BoxPlot")
+                            ),
+                            conditionalPanel(condition = "input.rbPlot == 'hist'",
+                                             plotOutput("Histogram")               
+                            ),
+                            br(),
+                            
+                            
+                            h3("Numeric Summary"),
+                            conditionalPanel(condition = "input.rbNum == 'descStat'",
+                                             tableOutput("descSummary")
+                            ),
+                            conditionalPanel(condition = "input.rbNum == 'freq'",
+                                             tableOutput("freqSummary")
+                            )
                             
                   )
                   
@@ -49,13 +91,29 @@ shinyUI(dashboardPage(
                 
         ),
        
+        
+        ###############
+        #  Model Tab  #
+        ###############
         tabItem(tabName="model",
-                h2("Tab Name Model")        
+                h2("Modeling"),
+                fluidPage(
+                    sidebarPanel(
+                        
+                        
+                    ),
+                    
+                    mainPanel(
+                        dataTableOutput("dataTable")
+                        
+                    )
+                    
+                )
                 
         ),
         
         tabItem(tabName="dataDownload",
-                h2("Tab Name Data Download"))
+                h2("Data Download"))
      )
       
     
