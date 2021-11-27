@@ -31,14 +31,21 @@ shinyUI(dashboardPage(
         #  EDA Tab  #
         #############
         tabItem(tabName="EDA",
-                h2("Data Exploration"),
+                h1("Data Exploration"),
+                br(),
                 fluidPage(
                   sidebarPanel(
                     selectInput("selectVar", "Select the Variable of Interest",
                                 c("Operating Profit Rate" = "Operating.Profit.Rate",
+                                  "Operating Gross Margin" = "Operating.Gross.Margin",
                                   "Debt Ratio" = "Debt.ratio..",
-                                  "Equity to Liability" = "Equity.to.Liability"
-                                  
+                                  "Equity to Liability" = "Equity.to.Liability",
+                                  "Revenue per Person" = "Revenue.per.person",
+                                  "Cash Flow Rate" = "Cash.flow.rate",
+                                  "Inventory Turnover Rate Times" = "Inventory.Turnover.Rate..times.",
+                                  "Current Liability to Current Assets" = "Current.Liability.to.Current.Assets",
+                                  "Cash Total Assets" = "Cash.Total.Assets",
+                                  "Realized Sales Gross Margin" = "Realized.Sales.Gross.Margin" 
                                 )
                     ),  
                       
@@ -68,7 +75,9 @@ shinyUI(dashboardPage(
                     checkboxInput("groupby", strong("Group by Bankruptcy"), FALSE)
                   ),
                   
-                  mainPanel(conditionalPanel(condition = "input.rbPlot == 'box'",
+                  mainPanel(uiOutput("plotTitle"),
+                    
+                            conditionalPanel(condition = "input.rbPlot == 'box'",
                                              plotOutput("BoxPlot")
                             ),
                             conditionalPanel(condition = "input.rbPlot == 'hist'",
@@ -77,7 +86,7 @@ shinyUI(dashboardPage(
                             br(),
                             
                             
-                            h3("Numeric Summary"),
+                            uiOutput("numSumTitle"),
                             conditionalPanel(condition = "input.rbNum == 'descStat'",
                                              tableOutput("descSummary")
                             ),
@@ -96,24 +105,85 @@ shinyUI(dashboardPage(
         #  Model Tab  #
         ###############
         tabItem(tabName="model",
-                h2("Modeling"),
-                fluidPage(
-                    sidebarPanel(
-                        
-                        
-                    ),
-                    
-                    mainPanel(
-                        dataTableOutput("dataTable")
-                        
-                    )
-                    
+                h1("Modeling"),
+                br(),
+                tabsetPanel(
+                  tabPanel("Modeling Info",
+                          fluidPage(
+                            
+                            sidebarPanel(
+                              radioButtons("selectModelInfo", strong("Select the Model of Interest"),
+                                           choices = c("Generalized Linear Regression Model" = "mod_glm",
+                                             "Classification Tree Model" = "mod_tree",
+                                             "Random Forest Model" = "mod_rf")
+                              )
+                            ),
+                            
+                            mainPanel(
+                              h2("Modeling Info"),
+                              textOutput("modelInfo")
+                            )
+                            
+                          )        
+                  ),
+                  
+                  
+                  tabPanel("Modeling Fitting",
+                          
+                          fluidPage(
+                            sidebarPanel(
+                              sliderInput("trainpct",
+                                          "Select % of Data to use for Training Set",
+                                          min = 50,
+                                          max = 90,
+                                          value = 75)
+                            
+                            ),
+                            
+                            mainPanel(
+                              h2("Model Fitting")
+                              
+                            )
+                            
+                          )        
+                  ),
+                  
+                  
+                  tabPanel("Prediction",
+                           
+                           fluidPage(
+                             
+                             sidebarPanel(
+                               
+                               
+                             ),
+                             
+                             mainPanel(
+                               h2("Prediction")
+                               
+                             )
+                             
+                           )        
+                  )
                 )
+                
+                
+                
+                
+                
+                
                 
         ),
         
+        
+        
+        
+        
+        
+        
+        
         tabItem(tabName="dataDownload",
-                h2("Data Download"))
+                h1("Data Download"))
      )
       
     
