@@ -1,6 +1,8 @@
 library(ggplot2)
 library(DT)
 library(shinydashboard)
+library(shinyWidgets)
+library(rattle)
 
 # Define UI for application that draws a histogram
 shinyUI(dashboardPage(
@@ -36,16 +38,22 @@ shinyUI(dashboardPage(
                 fluidPage(
                   sidebarPanel(
                     selectInput("selectVar", "Select the Variable of Interest",
-                                c("Operating Profit Rate" = "Operating.Profit.Rate",
-                                  "Operating Gross Margin" = "Operating.Gross.Margin",
-                                  "Debt Ratio" = "Debt.ratio..",
-                                  "Equity to Liability" = "Equity.to.Liability",
-                                  "Revenue per Person" = "Revenue.per.person",
-                                  "Cash Flow Rate" = "Cash.flow.rate",
-                                  "Inventory Turnover Rate Times" = "Inventory.Turnover.Rate..times.",
-                                  "Current Liability to Current Assets" = "Current.Liability.to.Current.Assets",
-                                  "Cash Total Assets" = "Cash.Total.Assets",
-                                  "Realized Sales Gross Margin" = "Realized.Sales.Gross.Margin" 
+                                c("(1) ROA C Before Interest and Depreciation Before Interest" = "ROA.C..before.interest.and.depreciation.before.interest",
+                                  "(2) Net Value Per Share B" = "Net.Value.Per.Share..B.",
+                                  "(3) Net Value Per Share C" = "Net.Value.Per.Share..C.",
+                                  "(4) Persistent EPS in the Last Four Seasons" = "Persistent.EPS.in.the.Last.Four.Seasons",
+                                  "(5) Per Share Net Profit Before Tax" = "Per.Share.Net.profit.before.tax..Yuan.Â..",
+                                  "(6) Total Debt Total Net Worth" = "Total.debt.Total.net.worth",
+                                  "(7) Debt Ratio" = "Debt.ratio..",
+                                  "(8) Borrowing Dependency" = "Borrowing.dependency",
+                                  "(9) Total Asset Turnover" = "Total.Asset.Turnover",
+                                  "(10) Fixed Assets Turnover Frequency" = "Fixed.Assets.Turnover.Frequency",
+                                  "(11) Cash Total Assets" = "Cash.Total.Assets",
+                                  "(12) Current Liabilities Liability" = "Current.Liabilities.Liability",
+                                  "(13) Retained Earnings to Total Assets" = "Retained.Earnings.to.Total.Assets",
+                                  "(14) Total Expense Assets" = "Total.expense.Assets",
+                                  "(15) Cash Turnover Rate" = "Cash.Turnover.Rate",
+                                  "(16) Net Income to Total Assets" = "Net.Income.to.Total.Assets"
                                 )
                     ),  
                       
@@ -136,15 +144,169 @@ shinyUI(dashboardPage(
                                           "Select % of Data to use for Training Set",
                                           min = 50,
                                           max = 90,
-                                          value = 75)
+                                          value = 75),
+                              br(),
+                              
+                              sliderInput("folds",
+                                          "Select Number of Cross-Validation Folds",
+                                          min = 3,
+                                          max = 10,
+                                          value = 5),
                             
-                            ),
                             
+                     
+                            
+                              h3("Logistic Regression Parameters"),
+                              br(),
+                              pickerInput("glmVar", strong("Select Variables for this Model"),
+                                 choices = c("(1) ROA C Before Interest and Depreciation Before Interest" = "ROA.C..before.interest.and.depreciation.before.interest",
+                                             "(2) Net Value Per Share B" = "Net.Value.Per.Share..B.",
+                                             "(3) Net Value Per Share C" = "Net.Value.Per.Share..C.",
+                                             "(4) Persistent EPS in the Last Four Seasons" = "Persistent.EPS.in.the.Last.Four.Seasons",
+                                             "(5) Per Share Net Profit Before Tax" = "Per.Share.Net.profit.before.tax..Yuan.Â..",
+                                             "(6) Total Debt Total Net Worth" = "Total.debt.Total.net.worth",
+                                             "(7) Debt Ratio" = "Debt.ratio..",
+                                             "(8) Borrowing Dependency" = "Borrowing.dependency",
+                                             "(9) Total Asset Turnover" = "Total.Asset.Turnover",
+                                             "(10) Fixed Assets Turnover Frequency" = "Fixed.Assets.Turnover.Frequency",
+                                             "(11) Cash Total Assets" = "Cash.Total.Assets",
+                                             "(12) Current Liabilities Liability" = "Current.Liabilities.Liability",
+                                             "(13) Retained Earnings to Total Assets" = "Retained.Earnings.to.Total.Assets",
+                                             "(14) Total Expense Assets" = "Total.expense.Assets",
+                                             "(15) Cash Turnover Rate" = "Cash.Turnover.Rate",
+                                             "(16) Net Income to Total Assets" = "Net.Income.to.Total.Assets" 
+                                            ),
+                                 
+                                 selected = c("Persistent.EPS.in.the.Last.Four.Seasons",
+                                              "Debt.ratio..",
+                                              "Borrowing.dependency",
+                                              "Total.Asset.Turnover",
+                                              "Fixed.Assets.Turnover.Frequency",
+                                              "Cash.Total.Assets",
+                                              "Cash.Turnover.Rate",
+                                              "Net.Income.to.Total.Assets"
+                                             ),
+                                 options = list(`actions-box` = TRUE),
+                                 multiple = TRUE
+                              ),
+                              br(),
+                              
+                              h3("Classification Tree Parameters"),
+                              
+                              pickerInput("treeVar", strong("Select Variables for this Model"),
+                                  choices = c("(1) ROA C Before Interest and Depreciation Before Interest" = "ROA.C..before.interest.and.depreciation.before.interest",
+                                              "(2) Net Value Per Share B" = "Net.Value.Per.Share..B.",
+                                              "(3) Net Value Per Share C" = "Net.Value.Per.Share..C.",
+                                              "(4) Persistent EPS in the Last Four Seasons" = "Persistent.EPS.in.the.Last.Four.Seasons",
+                                              "(5) Per Share Net Profit Before Tax" = "Per.Share.Net.profit.before.tax..Yuan.Â..",
+                                              "(6) Total Debt Total Net Worth" = "Total.debt.Total.net.worth",
+                                              "(7) Debt Ratio" = "Debt.ratio..",
+                                              "(8) Borrowing Dependency" = "Borrowing.dependency",
+                                              "(9) Total Asset Turnover" = "Total.Asset.Turnover",
+                                              "(10) Fixed Assets Turnover Frequency" = "Fixed.Assets.Turnover.Frequency",
+                                              "(11) Cash Total Assets" = "Cash.Total.Assets",
+                                              "(12) Current Liabilities Liability" = "Current.Liabilities.Liability",
+                                              "(13) Retained Earnings to Total Assets" = "Retained.Earnings.to.Total.Assets",
+                                              "(14) Total Expense Assets" = "Total.expense.Assets",
+                                              "(15) Cash Turnover Rate" = "Cash.Turnover.Rate",
+                                              "(16) Net Income to Total Assets" = "Net.Income.to.Total.Assets" 
+                                  ),
+                                  
+                                  selected = c("Persistent.EPS.in.the.Last.Four.Seasons",
+                                               "Debt.ratio..",
+                                               "Borrowing.dependency",
+                                               "Total.Asset.Turnover",
+                                               "Fixed.Assets.Turnover.Frequency",
+                                               "Cash.Total.Assets",
+                                               "Cash.Turnover.Rate",
+                                               "Net.Income.to.Total.Assets"
+                                  ),
+                                  options = list(`actions-box` = TRUE),
+                                  multiple = TRUE
+                              ),
+                              br(),
+                              
+                              h3("Random Forest Parameters"),
+                              
+                              pickerInput("rfVar", strong("Select Variables for this Model"),
+                                  choices = c("(1) ROA C Before Interest and Depreciation Before Interest" = "ROA.C..before.interest.and.depreciation.before.interest",
+                                              "(2) Net Value Per Share B" = "Net.Value.Per.Share..B.",
+                                              "(3) Net Value Per Share C" = "Net.Value.Per.Share..C.",
+                                              "(4) Persistent EPS in the Last Four Seasons" = "Persistent.EPS.in.the.Last.Four.Seasons",
+                                              "(5) Per Share Net Profit Before Tax" = "Per.Share.Net.profit.before.tax..Yuan.Â..",
+                                              "(6) Total Debt Total Net Worth" = "Total.debt.Total.net.worth",
+                                              "(7) Debt Ratio" = "Debt.ratio..",
+                                              "(8) Borrowing Dependency" = "Borrowing.dependency",
+                                              "(9) Total Asset Turnover" = "Total.Asset.Turnover",
+                                              "(10) Fixed Assets Turnover Frequency" = "Fixed.Assets.Turnover.Frequency",
+                                              "(11) Cash Total Assets" = "Cash.Total.Assets",
+                                              "(12) Current Liabilities Liability" = "Current.Liabilities.Liability",
+                                              "(13) Retained Earnings to Total Assets" = "Retained.Earnings.to.Total.Assets",
+                                              "(14) Total Expense Assets" = "Total.expense.Assets",
+                                              "(15) Cash Turnover Rate" = "Cash.Turnover.Rate",
+                                              "(16) Net Income to Total Assets" = "Net.Income.to.Total.Assets" 
+                                  ),
+                                  
+                                  selected = c("Persistent.EPS.in.the.Last.Four.Seasons",
+                                               "Debt.ratio..",
+                                               "Borrowing.dependency",
+                                               "Total.Asset.Turnover",
+                                               "Fixed.Assets.Turnover.Frequency",
+                                               "Cash.Total.Assets",
+                                               "Cash.Turnover.Rate",
+                                               "Net.Income.to.Total.Assets"
+                                  ),
+                                  options = list(`actions-box` = TRUE),
+                                  multiple = TRUE
+                              ),
+                              br(),
+                              
+                              h4("Click button below to fit all 3 Models"),
+                              
+                              # Action button for fitting all models
+                              actionButton("startbutton", "Fit Models"),
+                           
+                            ),  
+                               
                             mainPanel(
-                              h2("Model Fitting")
+                              h2("Model Fitting"),
+                              
+                              tabsetPanel(
+                                tabPanel("GLM Summary",
+                                  h3("GLM Model Summary"),
+                                  verbatimTextOutput("glmSummary"),
+                                  
+                                  h3("GLM Confusion Matrix Output"),
+                                  verbatimTextOutput("glmMatrix")
+                                ),
+                                
+                                tabPanel("Tree Summary",
+                                  h3("Tree Diagram"),
+                                  plotOutput("treeDiagram"),
+                                  
+                                  h3("Final Tree Model Summary"),
+                                  verbatimTextOutput("treeOutput"), 
+                                  
+                                  h3("Tree Confusion Matrix Output"),
+                                  verbatimTextOutput("treeMatrix")
+                                ),
+                                
+                                tabPanel("Random Forest Summary",
+                                  h3("Graph of Most Important Features"),
+                                  plotOutput("rfSummary"),       
+                                  
+                                  h3("Final Random Forest Model Summary and Confusion Matrix"),
+                                  verbatimTextOutput("rfOutput")
+                                ),
+                                
+                                tabPanel("Comparison",
+                                         
+                                )
+                              
+                              )
                               
                             )
-                            
+                         
                           )        
                   ),
                   
