@@ -393,22 +393,45 @@ shinyServer(function(input, output, session) {
     #  Data Tab  #
     ##############
     
-    output$filtered_data <- renderDataTable({
-      bankdata
+    # Filter the row based on the button selection
+    filter_row <- reactive({
+      if (input$filter_bankrupt == "bankrupt0"){
+        selected_data <- bankdata %>% filter(Bankrupt. == 0)
+        
+      }else if(input$filter_bankrupt == "bankrupt1"){
+        selected_data <- bankdata %>% filter(Bankrupt. == 1)
+        
+      }else{
+        selected_data <- bankdata
+      }
       
+      selected_data
     })
     
+    # Output the possibly filtered table for viewing
+    output$filtered_data <- renderDataTable({
+   
+      filter_row() %>% 
+        select(input$filter_column)
+    })
+    
+    # Allow user to download possibly filtered data
     output$downloadData <- downloadHandler(
       file = function(){
         paste("bankdata.csv")
       },
       
       content = function(file){
-        write.csv(bankdata, file)
+        write.csv(
+          filter_row() %>% 
+            select(input$filter_column),
+                  
+        file,
+        row.names=FALSE
+        )
       }
       
     )
-    
 })
     
 

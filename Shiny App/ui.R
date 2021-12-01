@@ -415,10 +415,17 @@ shinyUI(dashboardPage(
                 fluidPage(
                   sidebarPanel(
                     pickerInput("filter_column", "Select Columns to Filter",
-                                choices = colnames(bankdata)[2:96],
-                                selected = colnames(bankdata)[2:96],
+                                choices = colnames(bankdata),
+                                selected = colnames(bankdata),
                                 options = list(`actions-box` = TRUE),
                                 multiple = TRUE
+                    ),
+                    
+                    radioButtons("filter_bankrupt", "Select Rows to Filter",
+                                 choices = c("All Rows" = "allrows",
+                                             "Bankrupt = 0" = "bankrupt0",
+                                             "Bankrupt = 1" = "bankrupt1"
+                                 )
                     ),
                     
                     
@@ -429,7 +436,6 @@ shinyUI(dashboardPage(
 
                   mainPanel(
                     dataTableOutput("filtered_data")
-                    
                     
                   )
                 )
