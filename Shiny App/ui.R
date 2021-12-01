@@ -26,7 +26,24 @@ shinyUI(dashboardPage(
   
      tabItems(
         tabItem(tabName="about",
-                h2("Company Bankruptcy Prediction")
+                
+                
+                h2("Company Bankruptcy Prediction"),
+                br(),
+                
+                img(src='bankruptcy.jpg'),
+                br(),
+                
+                h3("Purpose"),
+                br(),
+                
+                "Data and source... link",
+                br(),
+                
+                "Purpose of each tab",
+                br(),
+                
+                "Picture..."
         ),
        
         #############
@@ -129,7 +146,19 @@ shinyUI(dashboardPage(
                             
                             mainPanel(
                               h2("Modeling Info"),
-                              textOutput("modelInfo")
+                              
+                              conditionalPanel(condition = "input.selectModelInfo == 'mod_glm'",
+                                h3("Generalized Linear Regression Model (GLM)")               
+                              ),
+                              
+                              conditionalPanel(condition = "input.selectModelInfo == 'mod_tree'",
+                                h3("Classification Tree Model")               
+                              ),
+                              
+                              conditionalPanel(condition = "input.selectModelInfo == 'mod_rf'",
+                                h3("Random Forest Model")               
+                              ),                              
+                              
                             )
                             
                           )        
@@ -155,9 +184,8 @@ shinyUI(dashboardPage(
                             
                             
                      
-                            
+                              ## Generalized Linear Model ##
                               h3("Logistic Regression Parameters"),
-                              br(),
                               pickerInput("glmVar", strong("Select Variables for this Model"),
                                  choices = c("(1) ROA C Before Interest and Depreciation Before Interest" = "ROA.C..before.interest.and.depreciation.before.interest",
                                              "(2) Net Value Per Share B" = "Net.Value.Per.Share..B.",
@@ -189,10 +217,12 @@ shinyUI(dashboardPage(
                                  options = list(`actions-box` = TRUE),
                                  multiple = TRUE
                               ),
+                              
+                              checkboxInput("allInteraction", strong("Include all first-order Interactions in the Model"), FALSE),
                               br(),
                               
+                              ## Classification Tree Model ##
                               h3("Classification Tree Parameters"),
-                              
                               pickerInput("treeVar", strong("Select Variables for this Model"),
                                   choices = c("(1) ROA C Before Interest and Depreciation Before Interest" = "ROA.C..before.interest.and.depreciation.before.interest",
                                               "(2) Net Value Per Share B" = "Net.Value.Per.Share..B.",
@@ -226,8 +256,8 @@ shinyUI(dashboardPage(
                               ),
                               br(),
                               
+                              ## Random Forest Model ##
                               h3("Random Forest Parameters"),
-                              
                               pickerInput("rfVar", strong("Select Variables for this Model"),
                                   choices = c("(1) ROA C Before Interest and Depreciation Before Interest" = "ROA.C..before.interest.and.depreciation.before.interest",
                                               "(2) Net Value Per Share B" = "Net.Value.Per.Share..B.",
@@ -300,7 +330,21 @@ shinyUI(dashboardPage(
                                 ),
                                 
                                 tabPanel("Comparison",
-                                         
+                                  h3("Comparison of Models on Test Data"),
+                                  verbatimTextOutput("accTest"),
+                                  br(),
+                                  
+                                  h3("Confusion Matrix of GLM Model on Test Data"),
+                                  verbatimTextOutput("glmMatrixTest"),
+                                  br(),
+                                  
+                                  h3("Confusion Matrix of Tree Model on Test Data"),
+                                  verbatimTextOutput("treeMatrixTest"),
+                                  br(),
+                                  
+                                  h3("Confusion Matrix of Random Forest Model on Test Data"),
+                                  verbatimTextOutput("rfMatrixTest")
+                                
                                 )
                               
                               )
@@ -310,42 +354,87 @@ shinyUI(dashboardPage(
                           )        
                   ),
                   
-                  
+                  ################
+                  #  Prediction  #
+                  ################
                   tabPanel("Prediction",
                            
                            fluidPage(
                              
                              sidebarPanel(
+                               radioButtons("chooseModel", strong("Choose Model to use for Prediction"),
+                                            choices = c("Generalized Linear Regression Model" = "predglm",
+                                                        "Classification Tree Model" = "predtree",
+                                                        "Random Forest Model" = "predrf"
+                                            )
+                               ),
                                
+                               # Add button to start prediction
+                               actionButton("predStart", "Predict"),
+                               
+                               conditionalPanel(condition = "input.chooseModel == 'predglm'",
+                                                h3("Model: Generalized Linear Regression Model"),
+                                                h3("Input Parameter Values for Prediction"),
+                                                h4("(The default is the mean)"),
+                                                uiOutput("glmPredInput")
+                               ),
+                               
+                               conditionalPanel(condition = "input.chooseModel == 'predtree'",
+                                                h3("Model: Classification Tree Model"),
+                                                h3("Input Parameter Values for Prediction"),
+                                                h4("(The default is the mean)"),
+                                                uiOutput("treePredInput")
+                               ),
+                               
+                               conditionalPanel(condition = "input.chooseModel == 'predrf'",
+                                                h3("Model: Random Forest Model"),
+                                                h3("Input Parameter Values for Prediction"),
+                                                h4("(The default is the mean)"),
+                                                uiOutput("rfPredInput")
+                               ),
                                
                              ),
                              
                              mainPanel(
-                               h2("Prediction")
-                               
+                               h2("Prediction"),
+                               tableOutput("predTable")
                              )
                              
                            )        
                   )
                 )
                 
-                
-                
-                
-                
-                
-                
         ),
         
         
         
         
-        
-        
-        
-        
         tabItem(tabName="dataDownload",
-                h1("Data Download"))
+                h1("Data Download"),
+                
+                fluidPage(
+                  sidebarPanel(
+                    pickerInput("filter_column", "Select Columns to Filter",
+                                choices = colnames(bankdata)[2:96],
+                                selected = colnames(bankdata)[2:96],
+                                options = list(`actions-box` = TRUE),
+                                multiple = TRUE
+                    ),
+                    
+                    
+                    # Create download button to download data set
+                    downloadBttn("downloadData", "Download")
+                  ),
+                  
+
+                  mainPanel(
+                    dataTableOutput("filtered_data")
+                    
+                    
+                  )
+                )
+                
+        )
      )
       
     

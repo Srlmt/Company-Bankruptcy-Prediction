@@ -93,12 +93,12 @@ shinyServer(function(input, output, session) {
       
       if(input$groupby == FALSE){
         ggplot(bankdata, aes_string(x = varText)) + 
-          geom_histogram() +
+          geom_histogram(bins=50) +
           labs(x=getVarName())
         
       }else if(input$groupby == TRUE){
         ggplot(bankdata, aes_string(x=varText, group="Bankrupt.", fill="as.factor(Bankrupt.)")) +
-          geom_histogram() +
+          geom_histogram(bins=50) +
           labs(x=getVarName(), fill="Bankrupt")
       }
     })
@@ -174,12 +174,27 @@ shinyServer(function(input, output, session) {
 
       
       ### GLM Model ###
-      model_glm <- train(as.factor(Bankrupt.) ~ .,
-                         data = bankTrain[, c("Bankrupt.", input$glmVar)],
-                         method = "glm",
-                         family = "binomial",
-                         trControl = trainControl(method = "cv", number = 5)
-                   )
+      # Check if "all interaction" box is checked and fit model accordingly
+      if (input$allInteraction == FALSE){
+        model_glm <- train(as.factor(Bankrupt.) ~ .,
+                           data = bankTrain[, c("Bankrupt.", input$glmVar)],
+                           method = "glm",
+                           family = "binomial",
+                           metric = "Accuracy",
+                           trControl = trainControl(method = "cv", number = 5)
+        )
+      }else if (input$allInteraction == TRUE){
+        model_glm <- train(as.factor(Bankrupt.) ~ .^2,
+                           data = bankTrain[, c("Bankrupt.", input$glmVar)],
+                           method = "glm",
+                           family = "binomial",
+                           metric = "Accuracy",
+                           trControl = trainControl(method = "cv", number = 5)
+        )
+      }
+      
+      
+
       
       # GLM Summary
       output$glmSummary <- renderPrint({summary(model_glm)
@@ -192,11 +207,11 @@ shinyServer(function(input, output, session) {
       })
       
       
-      
       ### Tree Model ###
       model_tree <- train(as.factor(Bankrupt.) ~ .,
                          data = bankTrain[, c("Bankrupt.", input$treeVar)],
                          method = "rpart",
+                         metric = "Accuracy",
                          trControl = trainControl(method = "cv", number = 5)
       )
       
@@ -235,12 +250,168 @@ shinyServer(function(input, output, session) {
       output$rfOutput <- renderPrint({
         model_rf$finalModel
       })
+      
+      ## Model Comparison ##
+      output$accTest <- renderPrint({
+        
+        # Predict using the Test data
+        glmPredTest <- predict(model_glm, bankTest, type="raw")
+        treePredTest <- predict(model_tree, bankTest, type="raw")
+        rfPredTest <- predict(model_rf, bankTest, type="raw")
 
+        # Generate confusion matrix for each model
+        glmMatrixTest <- confusionMatrix(glmPredTest, as.factor(bankTest$Bankrupt.))
+        treeMatrixTest <- confusionMatrix(treePredTest, as.factor(bankTest$Bankrupt.))
+        rfMatrixTest <- confusionMatrix(rfPredTest, as.factor(bankTest$Bankrupt.))
+        
+        # Get accuracy from the matrix
+        acc_glm <- glmMatrixTest$overall[1]
+        acc_tree <- treeMatrixTest$overall[1]
+        acc_rf <- rfMatrixTest$overall[1]
+        
+        # Combine the accuracies into a table for reporting
+        accTest <- rbind(acc_glm, acc_tree, acc_rf)
+        rownames(accTest) <- c("Logistic Regression Model", "Classification Tree Model", "Random Forest Model")
+        
+        # Assign the confusion matrix as output objects for reporting 
+        output$glmMatrixTest <- renderPrint({
+          glmMatrixTest$table
+        })
+
+        output$treeMatrixTest <- renderPrint({
+          treeMatrixTest$table
+        })
+        
+        output$rfMatrixTest <- renderPrint({
+          rfMatrixTest$table
+        })
+        
+        # Output accuracy table
+        round(accTest, 4)
+
+      })
+      
+      # Save the fitted models for use in Prediction
+      saveRDS(model_glm, "./Fitted Models/model_glm.rds")
+      saveRDS(model_tree, "./Fitted Models/model_tree.rds")
+      saveRDS(model_rf, "./Fitted Models/model_rf.rds")
+      
+      
+      ################
+      #  Prediction  #
+      ################
+      
+      # Function to create an un-ordered list for users to input values
+      # based on the variables they chose to train the model
+      # The default is the mean value
+      createInput <- function(inputVars, modVar){
+        tags$ul(tagList(
+          lapply(inputVars, function(var){
+            numericInput(inputId = paste0(var, "Val_", modVar),
+                         label = var,
+                         value = round(mean(bankdata[, var], na.rm=TRUE), 4),
+                         step = 0.1
+            )
+          })
+        ))
+      }
+      
+      # Predict using GLM 
+      output$glmPredInput <- renderUI({  
+        createInput(input$glmVar, "glm")
+      })
+      
+      # Predict using Tree model
+      output$treePredInput <- renderUI({  
+        createInput(input$treeVar, "tree")
+      })  
+      
+      # Predict using Random Forest model
+      output$rfPredInput <- renderUI({  
+        createInput(input$rfVar, "rf")
+      })  
       
     })
     
+
+    ### Calculate prediction when user clicks "Predict" ###
+    observeEvent(input$predStart, {
+      
+      # Load the model and variables based on the model chosen
+      if (input$chooseModel == "predglm"){
+        varsPredict <- unlist(lapply(input$glmVar, paste0, sep="Val_glm"))
+        varColNames <- stringr::str_remove_all(varsPredict, pattern="Val_glm")
+        predModel <- readRDS("./Fitted Models/model_glm.rds")
+        
+      }else if (input$chooseModel == "predtree"){
+        varsPredict <- unlist(lapply(input$treeVar, paste0, sep="Val_tree"))
+        varColNames <- stringr::str_remove_all(varsPredict, pattern="Val_tree")
+        predModel <- readRDS("./Fitted Models/model_tree.rds")
+      
+      }else if (input$chooseModel == "predrf"){
+        varsPredict <- unlist(lapply(input$rfVar, paste0, sep="Val_rf"))
+        varColNames <- stringr::str_remove_all(varsPredict, pattern="Val_rf")
+        predModel <- readRDS("./Fitted Models/model_rf.rds")
+      }
+      
+      # Create a matrix of user inputs
+      # Goal is to create a df containing the variable name and input values
+      inVar <- c()
+      for(var in varsPredict){
+        inVar <- c(inVar, input[[var]])
+      }
+      
+      # Remove "_ValueHolder_" from the list to get the variable names
+      inVar <- t(matrix(inVar))
+      colnames(inVar) <- varColNames
+      
+      # Create a data frame for use in prediction
+      predData <- as.data.frame(inVar)
+      
+      # Output two kinds of predictions
+      classPred <- predict(predModel, predData, type="raw")
+      probPred <- predict(predModel, predData, type="prob")
+      
+      # Combine and assign column names
+      predResult <-  cbind(classPred, probPred)
+      colnames(predResult) <- c("Bankruptcy Prediction", 
+                               "Predicted Probability of 0",
+                               "Predicted Probability of 1")
+      
+      
+      # Output the data frame as a table
+      output$predTable <- renderTable({
+         predResult
+        
+      }, digits=4
+      )
+      
+    })
+    
+    
+    ##############
+    #  Data Tab  #
+    ##############
+    
+    output$filtered_data <- renderDataTable({
+      bankdata
+      
+    })
+    
+    output$downloadData <- downloadHandler(
+      file = function(){
+        paste("bankdata.csv")
+      },
+      
+      content = function(file){
+        write.csv(bankdata, file)
+      }
+      
+    )
+    
 })
     
+
 
 
 
