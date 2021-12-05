@@ -181,7 +181,8 @@ shinyServer(function(input, output, session) {
       bankTrain <- bankdata[partition,]
       bankTest <- bankdata[-partition,]
 
-
+      # Get the number of cross-validation folds
+      folds <- input$folds
       
       ### GLM Model ###
       # Check if "all interaction" box is checked and fit model accordingly
@@ -191,7 +192,7 @@ shinyServer(function(input, output, session) {
                            method = "glm",
                            family = "binomial",
                            metric = "Accuracy",
-                           trControl = trainControl(method = "cv", number = 5),
+                           trControl = trainControl(method = "cv", number = folds),
                            preProcess = c("center", "scale")
         )
       }else if (input$allInteraction == TRUE){
@@ -200,7 +201,7 @@ shinyServer(function(input, output, session) {
                            method = "glm",
                            family = "binomial",
                            metric = "Accuracy",
-                           trControl = trainControl(method = "cv", number = 5),
+                           trControl = trainControl(method = "cv", number = folds),
                            preProcess = c("center", "scale")
         )
       }
@@ -227,7 +228,7 @@ shinyServer(function(input, output, session) {
                          data = bankTrain[, c("Bankrupt.", input$treeVar)],
                          method = "rpart",
                          metric = "Accuracy",
-                         trControl = trainControl(method = "cv", number = 5),
+                         trControl = trainControl(method = "cv", number = folds),
                          preProcess = c("center", "scale")
       )
       
@@ -251,10 +252,15 @@ shinyServer(function(input, output, session) {
       progress$inc(0.2, detail="Fitting Random Forest")
       
       ### Random Forest Model ###
+      
+      # Get Number of Trees
+      ntree <- input$ntree
+      
       model_rf <- train(as.factor(Bankrupt.) ~ .,
                         data = bankTrain[, c("Bankrupt.", input$rfVar)],
                         method = "rf",
-                        trControl = trainControl(method = "cv", number = 5),
+                        ntree = ntree,
+                        trControl = trainControl(method = "cv", number = folds),
                         preProcess = c("center", "scale"),
                         tuneGrid = data.frame(mtry = 1:5)
       )

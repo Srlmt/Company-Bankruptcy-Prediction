@@ -166,7 +166,7 @@ shinyUI(dashboardPage(
                             withMathJax(),
                             sidebarPanel(
                               radioButtons("selectModelInfo", strong("Select the Model of Interest"),
-                                           choices = c("Generalized Linear Regression Model" = "mod_glm",
+                                           choices = c("Logistic Regression Model" = "mod_glm",
                                              "Classification Tree Model" = "mod_tree",
                                              "Random Forest Model" = "mod_rf")
                               )
@@ -176,13 +176,24 @@ shinyUI(dashboardPage(
                               h2("Modeling Info"),
                               
                               conditionalPanel(condition = "input.selectModelInfo == 'mod_glm'",
-                                h3("Generalized Linear Regression Model (GLM)"),
-                                "Test",
+                                h3("Logistic Regression Model"),
+                                "The logistic regression model is an example of a broad class of models known as Generalized Linear Models (GLM). 
+                                For example, GLM also include linear regression, ANOVA, poisson regression, etc. Logistic regression measures the relationship 
+                                between the dependent variable and one or more independent variables(features) by estimating probabilities using the underlying 
+                                logit function. The logit function or the log-odds is the logarithm of the odds.",
+                                br(),
+                                br(),
+                                "We can look at the formula: ",
                                 br(),
                                 helpText('$$ ln(\\frac{P(Y=1)}{1 - P(Y=1)}) = log(\\frac{P(Y=1)}{P(Y=0)}) 
                                          = \\beta_0 + \\beta_1x_1 + \\beta_2x_2 + ...+ \\beta_nx_n $$' ),
+                                br(),
+                                "Logistic regression is the appropriate regression analysis to conduct when the dependent variable is binary.
+                                 In our case, we want to predict Bankruptcy which has values of 1 or 0.",
+                                br(),
+                                br(),
                                 
-                                
+                                "Here are the advantages and disadvantages of the Logistic Regression Model: ",
                                 h4(strong("Advantages")),
                                 tags$ul(
                                   tags$li("Easy to implement and doesn't require high computation power"),
@@ -203,25 +214,73 @@ shinyUI(dashboardPage(
                               
                               conditionalPanel(condition = "input.selectModelInfo == 'mod_tree'",
                                 h3("Classification Tree Model"),
+                                "Decision Trees are a non-parametric supervised learning method used for classification and regression. 
+                                 The goal is to create a model that predicts the value of a target variable by learning simple decision rules 
+                                 inferred from the data features. A tree can be seen as a piecewise constant approximation. The classification tree is a form of decision tree. 
+                                 While designing the decision tree, the features possessing the least value of the Gini Index would get preferred.
+                                 The Gini Index is determined by deducting the sum of squared of probabilities of each class from one, mathematically, Gini Index can be expressed as: ",
+                                br(),
+                                helpText('$$\\text{Gini Index} = 1 - \\sum^n_{i=1}(P_i)^2 $$'),
+                                "Where Pi denotes the probability of an element being classified for a distinct class.",
+                                br(),
+                                br(),
                                 
+                                "Classification tree models are recommended when the data mining task contains classifications or predictions of outcomes, 
+                                 and the goal is to generate rules that can be easily explained.",
+                                br(),
+                                br(),
+                                
+                                "Here are the advantages and disadvantages of the Classification Tree Model: ",
                                 h4(strong("Advantages")),
                                 tags$ul(
                                   tags$li("very intuitive and easy to interpret"),
                                   tags$li("Does not require normalization or scaling of data"),
-                                  tags$li("A3")
+                                  tags$li("Easy to implement and requires much less computation power compared to Random Forest Model")
                                 ),
                                 br(),
                                 
                                 h4(strong("Disadvantages")),
                                 tags$ul(
-                                  tags$li("D1"),
-                                  tags$li("D2"),
-                                  tags$li("D3")
+                                  tags$li("A small change in the data can cause a large change in the structure of the decision tree causing instability"),
+                                  tags$li("Overfitting, to fit the data it keeps generating new nodes
+                                           and ultimately the tree becomes too complex to interpret, and loses its generalization capabilities"),
+                                  tags$li("Affected by noise - little bit of noise can make it unstable which leads to wrong predictions.")
                                 )  
                               ),
                               
                               conditionalPanel(condition = "input.selectModelInfo == 'mod_rf'",
-                                h3("Random Forest Model")               
+                                h3("Random Forest Model"),
+                                "The random forest model is a classification algorithm that consists of many decision trees.
+                                 It creates multiple (e.g. 500) bootstrapped samples and fit decision trees to each of the bootstrapped samples.
+                                 When selecting a split point, the learning algorithm selects a random sample of predictors of which to search,
+                                 instead of all the predictors. By not looking at all the predictors every time,
+                                 it prevents one or two strong predictors to dominate the tree fits. 
+                                 The prediction of trees are then averaged (for regression) to get the final predicted value.
+                                 This would lead to less variance and better fit over an individual tree fit.",
+                                br(),
+                                "Regarding the number of predictors to look for, a good rule of thumb is 
+                                $$m = \\sqrt{(p)} \\text{  for classification and  } m = \\frac{p}{3} \\text{  for regression} $$",
+                                br(),
+                                "where m is the number of randomly selected features at each point, and p is the number of input variables.",
+                                br(),
+                                br(),
+                                
+                                "Here are the advantages and disadvantages of the Random Forest Model: ",
+                                h4(strong("Advantages")),
+                                tags$ul(
+                                  tags$li("Reduces overfitting in decision trees and helps to improve the accuracy"),
+                                  tags$li("Works well with both categorical and continuous values,
+                                           and is flexible to both classification and regression problems"),
+                                  tags$li("Does not require normalization or scaling of data")
+                                ),
+                                br(),
+                                
+                                h4(strong("Disadvantages")),
+                                tags$ul(
+                                  tags$li("Longer Training Period - it requires much more time to train as compared to classification trees 
+                                           as it generates a lot of trees and makes decision on the majority of votes"),
+                                  tags$li("Hard to interpret - since it involves averaging or taking the majority of multiple trees")
+                                )  
                               ),                              
                               
                             )
@@ -354,6 +413,13 @@ shinyUI(dashboardPage(
                                   options = list(`actions-box` = TRUE),
                                   multiple = TRUE
                               ),
+                              br(),
+                              sliderInput("ntree",
+                                          "Select Number of Trees",
+                                          min = 300,
+                                          max = 1000,
+                                          value = 500,
+                                          step = 50),
                               br(),
                               
                               h4("Click button below to fit all 3 Models"),
