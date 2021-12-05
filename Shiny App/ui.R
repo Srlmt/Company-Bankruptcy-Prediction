@@ -15,35 +15,63 @@ shinyUI(dashboardPage(
       menuItem("Data Exploration", tabName="EDA", icon = icon("chart-line")),
       menuItem("Modeling", tabName="model", icon = icon("cubes")),
       menuItem("Data", tabName="dataDownload", icon = icon("file-csv"))
-      
     )
-    
-    
-    
   ),
   dashboardBody(
 
-  
+     ###############
+     #  About Tab  #
+     ############### 
      tabItems(
         tabItem(tabName="about",
-                
-                
+
                 h2("Company Bankruptcy Prediction"),
                 br(),
                 
                 img(src='bankruptcy.jpg'),
                 br(),
                 
-                h3("Purpose"),
+                h3("App Purpose"),
+                "The purpose of this app is to examine the Taiwanese Bankruptcy Prediction Data Set",
+                " and construct models to try to predict whether companies are bankrupt or not.",
+                " You will be able to perform data exploration by creating summaries and graphs. ",
+                " You will also be able to construct models and make adjustments.",
+                " And lastly, you will be able to filter and download the data.",
                 br(),
                 
-                "Data and source... link",
+                h3("Data Source"),
+                "The Taiwanese Bankruptcy Prediction Data Set is from the ",
+                a(href = "https://archive.ics.uci.edu/ml/datasets/Taiwanese+Bankruptcy+Prediction#", 
+                    "UCI Machine Learning Repository"),
+                ". However, the data is missing from the Data Folder, so I found a ",
+                a(href = "https://www.kaggle.com/fedesoriano/company-bankruptcy-prediction?select=data.csv",
+                    "Kaggle competition"),
+                " that uses the data, and downloaded the data from there.",
+                br(),
                 br(),
                 
-                "Purpose of each tab",
+                "In the dataset there are 1 target variable (Bankruptcy) and 95 attributes.",
+                " To make things simple and reduce run time, this app only facilitates 16 attributes",
+                " when performing data exploration and model fitting.",
+                " However, the full data is available for download in the \"Data\" tab",
+                
+                h3("Tabs"),
+                "Here is a brief summary for each of the tabs in this app:",
+                br(),
                 br(),
                 
-                "Picture..."
+                tags$ul(
+                  tags$li(strong("Data Exploration: "), "Allows user to create graphical and numerical summaries of 16 attributes"),
+                  br(),
+                  
+                  tags$li(strong("Modeling: "), "Provides information for 3 different models, ",
+                          "allows user to adjust parameters and fit the models, and ",
+                          "displays model summaries, fit statistics, and comparison"),
+                  br(),
+                  
+                  tags$li(strong("Data: "), "Displays raw dataset and allows user to filter rows and columns, and ",
+                          "download the data in csv format")
+                )
         ),
        
         #############
@@ -135,7 +163,7 @@ shinyUI(dashboardPage(
                 tabsetPanel(
                   tabPanel("Modeling Info",
                           fluidPage(
-                            
+                            withMathJax(),
                             sidebarPanel(
                               radioButtons("selectModelInfo", strong("Select the Model of Interest"),
                                            choices = c("Generalized Linear Regression Model" = "mod_glm",
@@ -148,11 +176,48 @@ shinyUI(dashboardPage(
                               h2("Modeling Info"),
                               
                               conditionalPanel(condition = "input.selectModelInfo == 'mod_glm'",
-                                h3("Generalized Linear Regression Model (GLM)")               
+                                h3("Generalized Linear Regression Model (GLM)"),
+                                "Test",
+                                br(),
+                                helpText('$$ ln(\\frac{P(Y=1)}{1 - P(Y=1)}) = log(\\frac{P(Y=1)}{P(Y=0)}) 
+                                         = \\beta_0 + \\beta_1x_1 + \\beta_2x_2 + ...+ \\beta_nx_n $$' ),
+                                
+                                
+                                h4(strong("Advantages")),
+                                tags$ul(
+                                  tags$li("Easy to implement and doesn't require high computation power"),
+                                  tags$li("Predicted parameters give inferance about the importance of each feature,
+                                           with direction of association (positive or negative)"),
+                                  tags$li("Outputs well-calibrated probabilities along with classification results,
+                                           instead of just the final classification results")
+                                ),
+                                br(),
+                                
+                                h4(strong("Disadvantages")),
+                                tags$ul(
+                                  tags$li("May overfit on high dimensional datasets"),
+                                  tags$li("Non-linear problems can’t be solved because it has a linear decision surface"),
+                                  tags$li("Sensitive to outliers")
+                                )  
                               ),
                               
                               conditionalPanel(condition = "input.selectModelInfo == 'mod_tree'",
-                                h3("Classification Tree Model")               
+                                h3("Classification Tree Model"),
+                                
+                                h4(strong("Advantages")),
+                                tags$ul(
+                                  tags$li("very intuitive and easy to interpret"),
+                                  tags$li("Does not require normalization or scaling of data"),
+                                  tags$li("A3")
+                                ),
+                                br(),
+                                
+                                h4(strong("Disadvantages")),
+                                tags$ul(
+                                  tags$li("D1"),
+                                  tags$li("D2"),
+                                  tags$li("D3")
+                                )  
                               ),
                               
                               conditionalPanel(condition = "input.selectModelInfo == 'mod_rf'",
@@ -407,8 +472,9 @@ shinyUI(dashboardPage(
         ),
         
         
-        
-        
+        #######################
+        #  Data Download Tab  #
+        #######################
         tabItem(tabName="dataDownload",
                 h1("Data Download"),
                 
@@ -445,8 +511,6 @@ shinyUI(dashboardPage(
       
     
   )
-  
-  
   
   
 ))

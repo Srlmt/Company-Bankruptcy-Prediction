@@ -161,6 +161,15 @@ shinyServer(function(input, output, session) {
     
     observeEvent(input$startbutton, {
       
+      # Create a Progress object
+      progress <- Progress$new()
+      
+      # Close the progress when done with this "observeEvent"
+      on.exit(progress$close())
+      
+      # Start the progress bar, Fitting Model
+      progress$set(message = "Fitting Model", value = 0)
+      
       # Set Randomization Seed
       set.seed(556881234)
       
@@ -172,6 +181,7 @@ shinyServer(function(input, output, session) {
       bankTrain <- bankdata[partition,]
       bankTest <- bankdata[-partition,]
 
+
       
       ### GLM Model ###
       # Check if "all interaction" box is checked and fit model accordingly
@@ -181,7 +191,8 @@ shinyServer(function(input, output, session) {
                            method = "glm",
                            family = "binomial",
                            metric = "Accuracy",
-                           trControl = trainControl(method = "cv", number = 5)
+                           trControl = trainControl(method = "cv", number = 5),
+                           preProcess = c("center", "scale")
         )
       }else if (input$allInteraction == TRUE){
         model_glm <- train(as.factor(Bankrupt.) ~ .^2,
@@ -189,11 +200,13 @@ shinyServer(function(input, output, session) {
                            method = "glm",
                            family = "binomial",
                            metric = "Accuracy",
-                           trControl = trainControl(method = "cv", number = 5)
+                           trControl = trainControl(method = "cv", number = 5),
+                           preProcess = c("center", "scale")
         )
       }
       
-      
+      # Increment the progress bar, update to Fitting GLM
+      progress$inc(0.2, detail="Fitting GLM")
 
       
       # GLM Summary
@@ -206,13 +219,16 @@ shinyServer(function(input, output, session) {
         confusionMatrix(glmPred, as.factor(bankTrain$Bankrupt.))
       })
       
+      # Increment the progress bar, update to Fitting Tree Model
+      progress$inc(0.2, detail="Fitting Classification Tree")
       
       ### Tree Model ###
       model_tree <- train(as.factor(Bankrupt.) ~ .,
                          data = bankTrain[, c("Bankrupt.", input$treeVar)],
                          method = "rpart",
                          metric = "Accuracy",
-                         trControl = trainControl(method = "cv", number = 5)
+                         trControl = trainControl(method = "cv", number = 5),
+                         preProcess = c("center", "scale")
       )
       
       # Fancy Tree Diagram
@@ -230,6 +246,9 @@ shinyServer(function(input, output, session) {
       output$treeMatrix <- renderPrint({
         confusionMatrix(treePred, as.factor(bankTrain$Bankrupt.))
       })
+      
+      # Increment the progress bar, update to Fitting Random Forest Model
+      progress$inc(0.2, detail="Fitting Random Forest")
       
       ### Random Forest Model ###
       model_rf <- train(as.factor(Bankrupt.) ~ .,
@@ -250,6 +269,9 @@ shinyServer(function(input, output, session) {
       output$rfOutput <- renderPrint({
         model_rf$finalModel
       })
+      
+      # Increment the progress bar, update to Model Comparison
+      progress$inc(0.2, detail="Model Comparison")
       
       ## Model Comparison ##
       output$accTest <- renderPrint({
