@@ -4,6 +4,9 @@ library(shinydashboard)
 library(shinyWidgets)
 library(rattle)
 
+# Read data
+bankdata <- read.csv("../data.csv", header=TRUE)
+
 # Define UI for application that draws a histogram
 shinyUI(dashboardPage(
   
