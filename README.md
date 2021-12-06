@@ -16,10 +16,11 @@ The following packages are required to run this Shiny App:
 - `DT`: Provides an R interface to the JavaScript library DataTables
 - `caret`: Functions to streamline the model training process for complex regression and classification problems
 - `rattle`: Provides a GUI interface to R functionality
+- `randomForest`: Function to implement random forest algorithm
 
 This line of code can be used to install these packages:
 ```
-install.packages(c("shiny", "shinydashboard", "shinyWidgets", "dplyr", "ggplot2", "DT", "caret", "rattle"))
+install.packages(c("shiny", "shinydashboard", "shinyWidgets", "dplyr", "ggplot2", "DT", "caret", "rattle", "randomForest"))
 ```
 
 ## Code to Run the App
