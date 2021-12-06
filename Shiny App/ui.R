@@ -104,6 +104,13 @@ shinyUI(dashboardPage(
                                   "(16) Net Income to Total Assets" = "Net.Income.to.Total.Assets"
                                 )
                     ),  
+                    radioButtons("debtRatio", strong("Select the Rows to Filter"),
+                                 choices=c("All Data" = "all",
+                                           "Only Rows with Debt Ratio Above Average" = "above",
+                                           "Only Rows with Debt Ratio Below Average" = "below"
+                                 )
+                    ),
+                    br(),
                       
                     radioButtons("rbPlot", strong("Select the Type of Plot"),
                                  choices=c("Histogram" = "hist",
@@ -380,6 +387,11 @@ shinyUI(dashboardPage(
                                   ),
                                   options = list(`actions-box` = TRUE),
                                   multiple = TRUE
+                              ),
+                              radioButtons("treeMethod", strong("Select the Methodology for Splitting"),
+                                           choices=c("Gini Index" = "gini",
+                                                     "Information Gain" = "info"
+                                           )
                               ),
                               br(),
                               

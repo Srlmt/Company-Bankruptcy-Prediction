@@ -10,24 +10,26 @@ bankdata <- read.csv("../data.csv", header=TRUE)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
-    
-    # Get Data
-    getData <- reactive({
+  
+    getFilteredData <- reactive({
+      if(input$debtRatio == "above"){
+        newdata <- bankdata %>% filter(Debt.ratio.. > mean(Debt.ratio..))
+        
+      }else if(input$debtRatio == "below"){
+        newdata <- bankdata %>% filter(Debt.ratio.. < mean(Debt.ratio..))
+        
+      }else if (input$debtRatio == "all"){
         newdata <- bankdata
+      }
+      
+      newdata
     })
     
-    
-    
-    # Get Variable Name
+    # Create Variable Name for Display
     getVarName <- reactive({
         gsub("\\.", " ", input$selectVar)
     })
 
-    # create output of observations    
-    output$dataTable <- renderDataTable({
-      head(bankdata)
-    })
-    
     #########
     #  EDA  #
     #########
@@ -36,7 +38,7 @@ shinyServer(function(input, output, session) {
     output$descSummary <- renderTable({
         
         if (input$groupby == FALSE){
-              bankdata %>% 
+          getFilteredData() %>% 
                 summarize(N = n(), 
                           Min. = min(!!sym(input$selectVar)),
                           Q1 = quantile(!!sym(input$selectVar), 0.25),
@@ -47,7 +49,7 @@ shinyServer(function(input, output, session) {
                 ) 
 
         }else if (input$groupby == TRUE){
-          bankdata %>%
+          getFilteredData() %>%
             group_by(Bankrupt.) %>%
                 summarize(N = n(), 
                           Min. = min(!!sym(input$selectVar)),
@@ -65,7 +67,7 @@ shinyServer(function(input, output, session) {
     # Frequency Table
     output$freqSummary <- renderTable({
       
-      var <- bankdata[[input$selectVar]]
+      var <- getFilteredData()[[input$selectVar]]
       
       freq <- cut(var, breaks = input$datacut)
       
@@ -75,7 +77,7 @@ shinyServer(function(input, output, session) {
          freqTable
          
       }else if (input$groupby == TRUE){
-         freqTable <- as.data.frame(table(freq, bankdata$Bankrupt.))
+         freqTable <- as.data.frame(table(freq, getFilteredData()$Bankrupt.))
          colnames(freqTable) <- c("Interval", "Bankrupt", "Frequency")
          freqTable
       }   
@@ -85,18 +87,17 @@ shinyServer(function(input, output, session) {
     
     # Histogram
     output$Histogram <- renderPlot({
-      #get filtered data
-      newData <- bankdata
       
+      # Get the selected variables
       varText <- input$selectVar
       
       if(input$groupby == FALSE){
-        ggplot(bankdata, aes_string(x = varText)) + 
+        ggplot(getFilteredData(), aes_string(x = varText)) + 
           geom_histogram(bins=50) +
           labs(x=getVarName())
         
       }else if(input$groupby == TRUE){
-        ggplot(bankdata, aes_string(x=varText, group="Bankrupt.", fill="as.factor(Bankrupt.)")) +
+        ggplot(getFilteredData(), aes_string(x=varText, group="Bankrupt.", fill="as.factor(Bankrupt.)")) +
           geom_histogram(bins=50) +
           labs(x=getVarName(), fill="Bankrupt")
       }
@@ -104,18 +105,17 @@ shinyServer(function(input, output, session) {
     
     # BoxPlot
     output$BoxPlot <- renderPlot({
-        #get filtered data
-        newData <- bankdata
         
+        # Get the selected variables
         varText <- input$selectVar
         
         if(input$groupby == FALSE){
-          ggplot(bankdata, aes_string(y = varText)) + 
+          ggplot(getFilteredData(), aes_string(y = varText)) + 
             geom_boxplot() +
             labs(y=getVarName())
           
         }else if(input$groupby == TRUE){
-          ggplot(bankdata, aes_string(x="as.factor(Bankrupt.)", y = varText, group="Bankrupt.", fill="as.factor(Bankrupt.)")) +
+          ggplot(getFilteredData(), aes_string(x="as.factor(Bankrupt.)", y = varText, group="Bankrupt.", fill="as.factor(Bankrupt.)")) +
             geom_boxplot() +
             labs(x="Bankrupt", y=getVarName(), fill="Bankrupt")
         }
@@ -223,12 +223,22 @@ shinyServer(function(input, output, session) {
       progress$inc(0.2, detail="Fitting Classification Tree")
       
       ### Tree Model ###
+      
+      # Get the splitting methodology
+      if(input$treeMethod == "gini"){
+        treeMethod <- "gini"
+        
+      }else if(input$treeMethod == "info"){
+        treeMethod <- "information"
+      }
+      
       model_tree <- train(as.factor(Bankrupt.) ~ .,
                          data = bankTrain[, c("Bankrupt.", input$treeVar)],
                          method = "rpart",
                          metric = "Accuracy",
                          trControl = trainControl(method = "cv", number = folds),
-                         preProcess = c("center", "scale")
+                         preProcess = c("center", "scale"),
+                         parms=list(split=treeMethod)
       )
       
       # Fancy Tree Diagram
@@ -461,13 +471,6 @@ shinyServer(function(input, output, session) {
     )
 })
     
-
-
-
-
-#shiny::runGitHub("Srlmt/Company-Bankruptcy-Prediction", ref="main", subdir="Shiny App")
-
-
 
 
 
